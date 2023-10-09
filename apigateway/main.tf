@@ -42,10 +42,11 @@ resource "aws_api_gateway_resource" "mugen_shunkan_eisakubun_resource" {
 
 # API GatewayのHTTPメソッドの設定
 resource "aws_api_gateway_method" "mugen_shunkan_eisakubun_method" {
-  rest_api_id   = aws_api_gateway_rest_api.mugen_shunkan_eisakubun_api.id
-  resource_id   = aws_api_gateway_resource.mugen_shunkan_eisakubun_resource.id
-  http_method   = "GET"
-  authorization = "NONE"
+  rest_api_id      = aws_api_gateway_rest_api.mugen_shunkan_eisakubun_api.id
+  resource_id      = aws_api_gateway_resource.mugen_shunkan_eisakubun_resource.id
+  http_method      = "GET"
+  authorization    = "NONE"
+  api_key_required = true
 }
 
 # Lambda関数との統合
@@ -89,4 +90,86 @@ resource "aws_api_gateway_stage" "mugen_shunkan_eisakubun_stage" {
   rest_api_id   = aws_api_gateway_rest_api.mugen_shunkan_eisakubun_api.id
   stage_name    = "prd"
   description   = "Production environment"
+
+  # ロギング設定の追加
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.mugen_shunkan_eisakubun_log_group.arn
+    format          = "$context.identity.sourceIp - - [$context.requestTime] \"$context.httpMethod $context.resourcePath $context.protocol\" $context.status $context.responseLength $context.requestId"
+  }
+}
+
+# CloudWatchロググループの作成
+resource "aws_cloudwatch_log_group" "mugen_shunkan_eisakubun_log_group" {
+  name = "/aws/apigateway/mugen-shunkan-eisakubun"
+}
+
+# API Gatewayアカウントのロギング設定
+resource "aws_api_gateway_account" "logging" {
+  cloudwatch_role_arn = aws_iam_role.apigateway_cloudwatch_role.arn
+}
+
+resource "aws_iam_role" "apigateway_cloudwatch_role" {
+  name = "APIGatewayCloudWatchRole"
+
+  assume_role_policy = jsonencode({
+    Version   = "2012-10-17",
+    Statement = [
+      {
+        Action    = "sts:AssumeRole",
+        Principal = {
+          Service = "apigateway.amazonaws.com"
+        },
+        Effect = "Allow",
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "apigateway_cloudwatch_policy" {
+  name = "APIGatewayCloudWatchPolicy"
+  role = aws_iam_role.apigateway_cloudwatch_role.id
+
+  policy = jsonencode({
+    Version   = "2012-10-17",
+    Statement = [
+      {
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:DescribeLogGroups",
+          "logs:DescribeLogStreams",
+          "logs:PutLogEvents",
+          "logs:GetLogEvents",
+          "logs:FilterLogEvents"
+        ],
+        Effect   = "Allow",
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# APIキーの作成
+resource "aws_api_gateway_api_key" "mugen_shunkan_eisakubun_api_key" {
+  name        = "mugen-shunkan-eisakubun-api-key"
+  description = "API key for mugen-shunkan-eisakubun"
+  enabled     = true
+}
+
+# 使用プランの作成
+resource "aws_api_gateway_usage_plan" "mugen_shunkan_eisakubun_usage_plan" {
+  name        = "mugen-shunkan-eisakubun-usage-plan"
+  description = "Usage plan for mugen-shunkan-eisakubun API"
+
+  api_stages {
+    api_id = aws_api_gateway_rest_api.mugen_shunkan_eisakubun_api.id
+    stage  = aws_api_gateway_stage.mugen_shunkan_eisakubun_stage.stage_name
+  }
+}
+
+# APIキーと使用プランの関連付け
+resource "aws_api_gateway_usage_plan_key" "mugen_shunkan_eisakubun_usage_plan_key" {
+  key_id        = aws_api_gateway_api_key.mugen_shunkan_eisakubun_api_key.id
+  key_type      = "API_KEY"
+  usage_plan_id = aws_api_gateway_usage_plan.mugen_shunkan_eisakubun_usage_plan.id
 }
