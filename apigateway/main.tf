@@ -71,8 +71,7 @@ resource "aws_lambda_permission" "mugen_shunkan_eisakubun_api_lambda_permission"
 }
 
 # ステージを作るのにデプロイが必要なので作る
-# 変更があるたび毎回作られてしまうので、適用タイミングは気をつける
-# TODO: 毎回作られると意図せずデプロイされてしまうので、あとでterraform管理下から外す
+# FIXME: terraform apply時にデプロイが巻き戻るので注意
 resource "aws_api_gateway_deployment" "mugen_shunkan_eisakubun_deployment" {
   depends_on = [aws_api_gateway_integration.mugen_shunkan_eisakubun_lambda_integration]
 
