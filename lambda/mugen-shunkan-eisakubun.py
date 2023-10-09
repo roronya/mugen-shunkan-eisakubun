@@ -1,13 +1,14 @@
-import boto3
 import json
 import logging
+
+import boto3
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
 def lambda_handler(event, context):
-    pass
+    return main()
 
 
 def main():

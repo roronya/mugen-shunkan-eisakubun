@@ -2,7 +2,7 @@ terraform {
   required_version = "1.5.6"
   backend "s3" {
     bucket = "tfstate-mugen-shunkan-eisakubun"
-    key = "terraform.tfstate"
+    key    = "terraform.tfstate"
     region = "ap-northeast-1"
   }
 }
@@ -16,14 +16,16 @@ resource "aws_iam_role" "lambda_role" {
   name = "mugen-shunkan-eisakubun-lambda-role"
 
   assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [{
-      Action = "sts:AssumeRole",
-      Principal = {
-        Service = "lambda.amazonaws.com"
-      },
-      Effect = "Allow",
-    }]
+    Version   = "2012-10-17",
+    Statement = [
+      {
+        Action    = "sts:AssumeRole",
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        },
+        Effect = "Allow",
+      }
+    ]
   })
 }
 
@@ -32,18 +34,37 @@ resource "aws_iam_role_policy" "lambda_logging_policy" {
   name   = "lambda-logging"
   role   = aws_iam_role.lambda_role.name
   policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [{
-      Action = [
-        "logs:CreateLogGroup",
-        "logs:CreateLogStream",
-        "logs:PutLogEvents"
-      ],
-      Effect   = "Allow",
-      Resource = "arn:aws:logs:*:*:*"
-    }]
+    Version   = "2012-10-17",
+    Statement = [
+      {
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        Effect   = "Allow",
+        Resource = "arn:aws:logs:*:*:*"
+      }
+    ]
   })
 }
+
+# openai-forwarderを呼び出すためのポリシー
+resource "aws_iam_role_policy" "invoke_openai_forwarder" {
+  name   = "InvokeOpenAIForwarder"
+  role   = aws_iam_role.lambda_role.name
+  policy = jsonencode({
+    Version   = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = "lambda:InvokeFunction",
+        Resource = "arn:aws:lambda:ap-northeast-1:381106009995:function:openai-forwarder"
+      }
+    ]
+  })
+}
+
 
 resource "aws_lambda_function" "mugen-shunkan-eisakubun" {
   filename      = "function.zip"
@@ -51,4 +72,5 @@ resource "aws_lambda_function" "mugen-shunkan-eisakubun" {
   role          = aws_iam_role.lambda_role.arn
   handler       = "mugen-shunkan-eisakubun.lambda_handler"
   runtime       = "python3.11"
+  timeout       = 30
 }
