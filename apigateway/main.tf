@@ -69,12 +69,24 @@ resource "aws_lambda_permission" "mugen_shunkan_eisakubun_api_lambda_permission"
   source_arn    = "${aws_api_gateway_rest_api.mugen_shunkan_eisakubun_api.execution_arn}/*/${aws_api_gateway_method.mugen_shunkan_eisakubun_method.http_method}${aws_api_gateway_resource.mugen_shunkan_eisakubun_resource.path}"
 }
 
-# 出力: API GatewayのURL
-output "mugen_shunkan_eisakubun_api_url" {
-  value = "${aws_api_gateway_rest_api.mugen_shunkan_eisakubun_api.execution_arn}/*/${aws_api_gateway_method.mugen_shunkan_eisakubun_method.http_method}${aws_api_gateway_resource.mugen_shunkan_eisakubun_resource.path}"
+# ステージを作るのにデプロイが必要なので作る
+# 変更があるたび毎回作られてしまうので、適用タイミングは気をつける
+# TODO: 毎回作られると意図せずデプロイされてしまうので、あとでterraform管理下から外す
+resource "aws_api_gateway_deployment" "mugen_shunkan_eisakubun_deployment" {
+  depends_on = [aws_api_gateway_integration.mugen_shunkan_eisakubun_lambda_integration]
+
+  rest_api_id = aws_api_gateway_rest_api.mugen_shunkan_eisakubun_api.id
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
-# ステージとデプロイは手動もしくはaws cliから行う
-## やったこと
-## 1. 手動でステージとデプロイを作る
-## 2. ステージの「ログとトレース」を編集しCloudWatchログを有効化する
+# API Gatewayのステージの作成
+# ↑で作ったデプロイと紐付ける
+resource "aws_api_gateway_stage" "mugen_shunkan_eisakubun_stage" {
+  deployment_id = aws_api_gateway_deployment.mugen_shunkan_eisakubun_deployment.id
+  rest_api_id   = aws_api_gateway_rest_api.mugen_shunkan_eisakubun_api.id
+  stage_name    = "prd"
+  description   = "Production environment"
+}
