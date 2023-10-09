@@ -100,6 +100,7 @@ resource "aws_api_gateway_stage" "mugen_shunkan_eisakubun_stage" {
     destination_arn = aws_cloudwatch_log_group.mugen_shunkan_eisakubun_log_group.arn
     format          = "$context.identity.sourceIp - - [$context.requestTime] \"$context.httpMethod $context.resourcePath $context.protocol\" $context.status $context.responseLength $context.requestId"
   }
+
 }
 
 # CloudWatchロググループの作成
@@ -168,6 +169,10 @@ resource "aws_api_gateway_usage_plan" "mugen_shunkan_eisakubun_usage_plan" {
   api_stages {
     api_id = aws_api_gateway_rest_api.mugen_shunkan_eisakubun_api.id
     stage  = aws_api_gateway_stage.mugen_shunkan_eisakubun_stage.stage_name
+  }
+
+  throttle_settings {
+    rate_limit = 10 # 秒間リクエストは10まで
   }
 }
 
