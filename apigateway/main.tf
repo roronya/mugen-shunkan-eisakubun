@@ -73,3 +73,8 @@ resource "aws_lambda_permission" "mugen_shunkan_eisakubun_api_lambda_permission"
 output "mugen_shunkan_eisakubun_api_url" {
   value = "${aws_api_gateway_rest_api.mugen_shunkan_eisakubun_api.execution_arn}/*/${aws_api_gateway_method.mugen_shunkan_eisakubun_method.http_method}${aws_api_gateway_resource.mugen_shunkan_eisakubun_resource.path}"
 }
+
+# ステージとデプロイは手動もしくはaws cliから行う
+## やったこと
+## 1. 手動でステージとデプロイを作る
+## 2. ステージの「ログとトレース」を編集しCloudWatchログを有効化する

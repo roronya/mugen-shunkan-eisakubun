@@ -1,0 +1,8 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  curl:
+    cmds:
+      - curl https://2xo5rwxz8c.execute-api.ap-northeast-1.amazonaws.com/prd/invoke
