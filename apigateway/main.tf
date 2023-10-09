@@ -70,12 +70,17 @@ resource "aws_lambda_permission" "mugen_shunkan_eisakubun_api_lambda_permission"
   source_arn    = "${aws_api_gateway_rest_api.mugen_shunkan_eisakubun_api.execution_arn}/*/${aws_api_gateway_method.mugen_shunkan_eisakubun_method.http_method}${aws_api_gateway_resource.mugen_shunkan_eisakubun_resource.path}"
 }
 
-# ステージを作るのにデプロイが必要なので作る
-# FIXME: terraform apply時にデプロイが巻き戻るので注意
+# terraformではデプロイしたくないが、ステージを作るのにデプロイが必要なので作る
+# しかし、Webコンソールから手動でデプロイを行ったあとにterraform applyをすると作成時のデプロイにterraformが巻き戻してしまう
+# そのためtriggersを使って変更があったときのみデプロイを行うようにしてある
 resource "aws_api_gateway_deployment" "mugen_shunkan_eisakubun_deployment" {
-  depends_on = [aws_api_gateway_integration.mugen_shunkan_eisakubun_lambda_integration]
-
+  depends_on  = [aws_api_gateway_integration.mugen_shunkan_eisakubun_lambda_integration]
   rest_api_id = aws_api_gateway_rest_api.mugen_shunkan_eisakubun_api.id
+
+  triggers = {
+    configuration = sha256(jsonencode(aws_api_gateway_rest_api.mugen_shunkan_eisakubun_api.body))
+  }
+
 
   lifecycle {
     create_before_destroy = true
