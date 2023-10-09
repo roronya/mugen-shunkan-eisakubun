@@ -39,3 +39,10 @@ tasks:
     cmds:
       - task: rm
       - task: destroy
+
+  apply:
+    desc: terraform apply
+    cmds:
+      - task: zip
+      - terraform apply
+      - task: rm

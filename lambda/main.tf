@@ -1,7 +1,7 @@
 terraform {
   required_version = "1.5.6"
   backend "s3" {
-    bucket = "tfstate-mugen-shunkan-eisakubun"
+    bucket = "tfstate-lambda-mugen-shunkan-eisakubun"
     key    = "terraform.tfstate"
     region = "ap-northeast-1"
   }
@@ -66,7 +66,7 @@ resource "aws_iam_role_policy" "invoke_openai_forwarder" {
 }
 
 
-resource "aws_lambda_function" "mugen-shunkan-eisakubun" {
+resource "aws_lambda_function" "mugen_shunkan_eisakubun" {
   filename      = "function.zip"
   function_name = "mugen-shunkan-eisakubun"
   role          = aws_iam_role.lambda_role.arn
@@ -74,3 +74,16 @@ resource "aws_lambda_function" "mugen-shunkan-eisakubun" {
   runtime       = "python3.11"
   timeout       = 30
 }
+
+# API Gatewayで参照したいのでoutputしておく
+# also see: apigateway/main.tf
+output "mugen_shunkan_eisakubun_lambda_arn" {
+  description = "ARN of the mugen-shunkan-eisakubun lambda function"
+  value       = aws_lambda_function.mugen_shunkan_eisakubun.arn
+}
+
+output "mugen_shunkan_eisakubun_lambda_function_name" {
+  description = "ARN of the mugen-shunkan-eisakubun lambda function"
+  value       = aws_lambda_function.mugen_shunkan_eisakubun.function_name
+}
+
