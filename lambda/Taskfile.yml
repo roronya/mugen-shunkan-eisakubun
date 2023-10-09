@@ -1,0 +1,41 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  zip:
+    desc: lambdaにデプロイするためにPythonのソースコードをzipに固めます
+    dir: work
+    cmds:
+      - cp ../mugen-shunkan-eisakubun.py ./
+      - poetry export -f requirements.txt --output requirements.txt
+      - poetry run pip install -r requirements.txt -t .
+      - zip -r function.zip *
+      - mv function.zip ../
+      - cd ../ && rm -rf work
+
+  rm:
+    desc: ビルドとデプロイのために作成したファイルを削除します
+    cmds:
+      - rm function.zip
+
+  update:
+    desc: update lambda
+    cmds:
+      - aws lambda update-function-code --function-name OpenAI_Forwarder --zip-file fileb://function.zip
+      - sleep 2 # コードの変更の直後はロックがかかって設定更新できないのでsleepする
+      - aws lambda update-function-configuration --function-name OpenAI_Forwarder --environment 'Variables={OPENAI_API_KEY={{.X_OPENAI_API_KEY}}}'
+
+
+  deploy:
+    desc: deploy lambda
+    cmds:
+      - task: zip
+      - task: update
+      - task: rm
+
+  clean:
+    desc: rm & destroy
+    cmds:
+      - task: rm
+      - task: destroy

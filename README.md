@@ -1,1 +1,0 @@
-# mugen-shunkan-eisakubun
