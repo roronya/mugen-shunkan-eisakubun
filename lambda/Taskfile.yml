@@ -2,6 +2,9 @@
 
 version: '3'
 
+vars:
+  FUNCTION_NAME: mugen-shunkan-eisakubun
+
 tasks:
   zip:
     desc: lambdaにデプロイするためにPythonのソースコードをzipに固めます
@@ -22,10 +25,7 @@ tasks:
   update:
     desc: update lambda
     cmds:
-      - aws lambda update-function-code --function-name OpenAI_Forwarder --zip-file fileb://function.zip
-      - sleep 2 # コードの変更の直後はロックがかかって設定更新できないのでsleepする
-      - aws lambda update-function-configuration --function-name OpenAI_Forwarder --environment 'Variables={OPENAI_API_KEY={{.X_OPENAI_API_KEY}}}'
-
+      - aws lambda update-function-code --function-name {{.FUNCTION_NAME}} --zip-file fileb://function.zip
 
   deploy:
     desc: deploy lambda
